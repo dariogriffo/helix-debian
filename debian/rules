@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+HELIX_VERSION := $(shell dpkg-parsechangelog -S Version | sed 's/[-~].*//')
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	@arch="$(DEB_HOST_ARCH)"; \
+	case "$$arch" in \
+		amd64) HELIX_SUFFIX="x86_64-linux" ;; \
+		arm64) HELIX_SUFFIX="aarch64-linux" ;; \
+		*) echo "Unsupported architecture: $$arch"; exit 1 ;; \
+	esac; \
+	HELIX_RELEASE="helix-$(HELIX_VERSION)-$$HELIX_SUFFIX"; \
+	echo "Downloading $$HELIX_RELEASE for $(HELIX_VERSION)..."; \
+	wget -q "https://github.com/helix-editor/helix/releases/download/$(HELIX_VERSION)/$$HELIX_RELEASE.tar.xz"; \
+	tar -xf "$$HELIX_RELEASE.tar.xz"; \
+	rm -f "$$HELIX_RELEASE.tar.xz"; \
+	echo "$$HELIX_RELEASE" > .helix_release_name
+
+override_dh_auto_install:
+	@HELIX_RELEASE=$$(cat .helix_release_name); \
+	install -D -m 755 "$$HELIX_RELEASE/hx" debian/helix/usr/lib/helix/hx; \
+	mkdir -p debian/helix/usr/lib/helix/runtime; \
+	cp -r "$$HELIX_RELEASE"/runtime/. debian/helix/usr/lib/helix/runtime/
+
+override_dh_auto_test:
+
+override_dh_auto_clean:
+	@if [ -f .helix_release_name ]; then \
+		HELIX_RELEASE=$$(cat .helix_release_name); \
+		rm -rf "$$HELIX_RELEASE" .helix_release_name || true; \
+	fi
+
+override_dh_strip:
+
+override_dh_shlibdeps:

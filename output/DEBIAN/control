@@ -1,0 +1,9 @@
+Section: editors
+Priority: optional
+Maintainer: Dario Griffo <dariogriffo@gmail.com>
+Homepage: https://github.com/helix-editor/helix
+Package: helix
+Version: helix_VERSION-BUILD_VERSION+DIST
+Architecture: SUPPORTED_ARCHITECTURES
+Description: A post-modern modal text editor, written in Rust.
+

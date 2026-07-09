@@ -1,0 +1,17 @@
+Source: helix
+Section: editors
+Priority: optional
+Maintainer: Dario Griffo <dariogriffo@gmail.com>
+Build-Depends: debhelper-compat (= 13), wget, ca-certificates
+Standards-Version: 4.6.2
+Homepage: https://github.com/helix-editor/helix
+Rules-Requires-Root: no
+
+Package: helix
+Architecture: amd64 arm64
+Depends: ${misc:Depends}
+Description: A post-modern modal text editor, written in Rust
+ Helix is a Kakoune / Neovim inspired editor, written in Rust. It features
+ vim-like modal editing, multiple selections, built-in language server
+ support, and smart, incremental syntax highlighting and code editing via
+ tree-sitter.
