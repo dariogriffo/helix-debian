@@ -16,6 +16,8 @@ RUN mkdir -p /output/DEBIAN
 COPY ${HELIX_RELEASE}/hx /output/usr/lib/helix/hx
 COPY ${HELIX_RELEASE}/runtime /output/usr/lib/helix/runtime
 COPY output/DEBIAN/control /output/DEBIAN/
+COPY output/DEBIAN/postinst /output/DEBIAN/postinst
+RUN chmod 755 /output/DEBIAN/postinst
 COPY output/copyright /output/usr/share/doc/helix/
 COPY output/changelog.Debian /output/usr/share/doc/helix/
 COPY output/README.md /output/usr/share/doc/helix/
