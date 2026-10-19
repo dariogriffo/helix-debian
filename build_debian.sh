@@ -66,35 +66,32 @@ build_architecture() {
 
     rm -f "${helix_release}.tar.xz"
 
-    # Build packages for supported Debian distributions
-    declare -a arr=("bookworm" "trixie" "forky" "sid")
+    # One package for every suite: upstream ships one binary per architecture,
+    # so only the old ~<suite> version suffix ever differed. The fixed ~griffo
+    # keeps it below the distro's own build of the same version.
+    FULL_VERSION="$helix_VERSION-${BUILD_VERSION}~griffo_${build_arch}"
+    echo "  Building $FULL_VERSION"
 
-    for dist in "${arr[@]}"; do
-        FULL_VERSION="$helix_VERSION-${BUILD_VERSION}~${dist}_${build_arch}"
-        echo "  Building $FULL_VERSION"
+    if ! docker build . -t "helix-$build_arch" \
+        --build-arg helix_VERSION="$helix_VERSION" \
+        --build-arg BUILD_VERSION="$BUILD_VERSION" \
+        --build-arg FULL_VERSION="$FULL_VERSION" \
+        --build-arg ARCH="$build_arch" \
+        --build-arg HELIX_RELEASE="$helix_release"; then
+        echo "❌ Failed to build Docker image for $build_arch"
+        return 1
+    fi
 
-        if ! docker build . -t "helix-$dist-$build_arch" \
-            --build-arg DEBIAN_DIST="$dist" \
-            --build-arg helix_VERSION="$helix_VERSION" \
-            --build-arg BUILD_VERSION="$BUILD_VERSION" \
-            --build-arg FULL_VERSION="$FULL_VERSION" \
-            --build-arg ARCH="$build_arch" \
-            --build-arg HELIX_RELEASE="$helix_release"; then
-            echo "❌ Failed to build Docker image for $dist on $build_arch"
-            return 1
-        fi
+    id="$(docker create "helix-$build_arch")"
+    if ! docker cp "$id:/helix_$FULL_VERSION.deb" - > "./helix_$FULL_VERSION.deb"; then
+        echo "❌ Failed to extract .deb package for $build_arch"
+        return 1
+    fi
 
-        id="$(docker create "helix-$dist-$build_arch")"
-        if ! docker cp "$id:/helix_$FULL_VERSION.deb" - > "./helix_$FULL_VERSION.deb"; then
-            echo "❌ Failed to extract .deb package for $dist on $build_arch"
-            return 1
-        fi
-
-        if ! tar -xf "./helix_$FULL_VERSION.deb"; then
-            echo "❌ Failed to extract .deb contents for $dist on $build_arch"
-            return 1
-        fi
-    done
+    if ! tar -xf "./helix_$FULL_VERSION.deb"; then
+        echo "❌ Failed to extract .deb contents for $build_arch"
+        return 1
+    fi
 
     # Clean up extracted directory
     rm -rf "$helix_release" || true
